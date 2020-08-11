@@ -76,4 +76,7 @@ function boolArrayToNumber(array) {
   return array.reduce((res, x) => res << 1 | x)
 } 
 
-parse("druidsheet.tsv", addSpell)
+const sheetDir = './source/'
+fs.readdirSync(sheetDir).forEach(file => {
+  parse(sheetDir+file, addSpell)
+});

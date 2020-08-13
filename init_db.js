@@ -35,6 +35,7 @@ function parse(filepath, callback) {
 
     readInterface.on('close', function() {
       // end of file reached
+      console.log("Finished parsing "+filepath+" to JSON")
       resolve()
     });
   })
@@ -68,14 +69,14 @@ function addSpell(spell) {
   // /     (.*?)        / <- lazy 0+ quantified dot group. matches as few characters as possible (including 0) that satisfy the rest of the expression. returns as seperate group in output, the materials
   , [normalisedMaterials, normalisedDescription] = spell.Description.match(/(?:\((.*?)\))?(.+)/)/* then we select just the 2 matched groups with ->*/.slice(1) 
   
-  // check if spell already exists (array item with same name&description), data contains duplicate spell rows with different classes (its a many-many relationship).
-  , spellId = Spells.findIndex( ({name, description})  =>  name==spell.name && description==normalisedDescription ) +1
+  // check if spell already exists (array item with same name&description), data contains duplicate spell rows with different classes (its a many-many relationship). (actually sometimes the description is different but it seems to always be the case that the first entry is correct and the subsequent just lack some section)
+  , spellId = Spells.findIndex( ({name})  =>  name==spell.Name ) +1
   
   
   // -- add data to table --
   if (spellId) {
     // if spell already has an id, just add a thing to the Classes_Spells array
-    Classes_Spells.push(asLookup(Classes, normalisedClass), spellId)
+    Classes_Spells.push([asLookup(Classes, normalisedClass), spellId])
   } else {
     // otherwise, add the whole thingy
     spellId = Spells.push({
@@ -90,7 +91,7 @@ function addSpell(spell) {
       "materials":   normalisedMaterials
     })
     // dont forget the class associated with it
-    Classes_Spells.push(asLookup(Classes, normalisedClass), spellId)
+    Classes_Spells.push([asLookup(Classes, normalisedClass), spellId])
   }
 }
 
@@ -108,66 +109,72 @@ function boolArrayToNumber(array) {
   return array.reduce((res, x) => res << 1 | x)
 } 
 
-const sheetDir = './source/'
-Promise.all(                             // waits until all the promises (async code) finish (so that everything is parsed)
-  fs.readdirSync(sheetDir).map(file =>  // makes an array for each file in specified folder
-    parse(sheetDir+file, addSpell)       // parses said file. returns a promise which goes into the array which is waited for wil Promise.all
-  )
-).then(()=>{
-  try{
-  // when the code reaches here, it's parsed all the tsv data into some nice arrays
-  // now its time to put those arrays into good old SQL with all the goodies like permenance n stuff
-  
-  // init sqlite db
-  const databasePath = "./.data/sqlite.db";
-  const sqlite3 = require("sqlite3").verbose(); // read up https://www.npmjs.com/package/sqlite3
-  const db = new sqlite3.Database(databasePath, console.log);
-  
-  db.serialize(()=>{
-    // serialize means the database will run our commands in order 
-    
-    // first, lets create all the lookup tables. done with a loop because it's very repetitive
-    ["Schools", "Classes", "Distances", "Times"].forEach(table=>{
+var procedural = new Promise(finish => {
+  const sheetDir = './source/'
+  Promise.all(                             // waits until all the promises (async code) finish (so that everything is parsed)
+    fs.readdirSync(sheetDir).map(file =>  // makes an array for each file in specified folder
+      parse(sheetDir+file, addSpell)       // parses said file. returns a promise which goes into the array which is waited for wil Promise.all
+    )
+  ).then(()=>{
+    console.log("Converting JSON into SQL...")
+    try{
+    // when the code reaches here, it's parsed all the tsv data into some nice arrays
+    // now its time to put those arrays into good old SQL with all the goodies like permenance n stuff
+
+    // init sqlite db
+    const databasePath = "./.data/sqlite.db";
+    const sqlite3 = require("sqlite3").verbose(); // read up https://www.npmjs.com/package/sqlite3
+    const db = new sqlite3.Database(databasePath, console.log);
+
+    db.serialize(()=>{
+      // serialize means the database will run our commands in order 
+
+      // first, lets create all the lookup tables. done with a loop because it's very repetitive
+      ["Schools", "Classes", "Distances", "Times"].forEach(table=>{
+
+        db.run(`DROP TABLE IF EXISTS ${table}`) // we erase any previous data
+        db.run(`CREATE TABLE ${table} (id INTEGER PRIMARY KEY AUTOINCREMENT, ${table}_name TEXT)`) // create the table
+        let statement = db.prepare(`INSERT INTO ${table} (${table}_name) VALUES (?)`) //
+        tables[table].forEach(x=>{statement.run(x)})
+        statement.finalize()
+
+      })
+
       
-      db.run(`DROP TABLE IF EXISTS ${table}`) // we erase any previous data
-      db.run(`CREATE TABLE ${table} (id INTEGER PRIMARY KEY AUTOINCREMENT, ${table}_name TEXT)`) // create the table
-      let statement = db.prepare(`INSERT INTO ${table} (${table}_name) VALUES (?)`) //
-      tables[table].forEach(x=>{statement.run(x)})
-      statement.finalize()
-      
+      // okay big girl time for the spells table
+      db.run("DROP TABLE IF EXISTS Spells")
+        .run(`CREATE TABLE Spells (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              spell_name TEXT UNIQUE,
+              spell_description TEXT,
+              school_id INTEGER REFERENCES Schools (id),
+              level INTEGER,
+              casttime_id INTEGER REFERENCES Times (id),
+              duration_id INTEGER REFERENCES Times (id),
+              range_id INTEGER REFERENCES Distances (id),
+              components INTEGER,
+              materials TEXT
+        )`) 
+      let statement = db.prepare("INSERT INTO Spells (spell_name, spell_description, school_id, level, casttime_id, duration_id, range_id, components, materials) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      Spells.forEach(spell=>{statement.run(Object.values(spell), (e,r)=>{if(e){console.log(e);console.log(spell)}})})
+      statement.finalize() 
+
+      // you did perfect! my perfect pet. theres just one more table the Classes_Spells relationship thingo
+      db.run("DROP TABLE IF EXISTS Classes_Spells")
+        .run("CREATE TABLE Classes_Spells (id INTEGER PRIMARY KEY AUTOINCREMENT, class_id INTEGER REFERENCES Classes (id), spell_id INTEGER REFERENCES Spells (id))")
+      statement = db.prepare("INSERT INTO Classes_Spells (class_id, spell_id) VALUES (?, ?)")
+      Classes_Spells.forEach(([a,b])=>{statement.run(a,b)})
+  
+      // wonderful. marvelous. lets check its done
+      for (x in tables) {
+        let tableName = x
+        db.get("SELECT COUNT(*) AS n FROM "+tableName, (e, results)=>console.log(e?e:`Initialised table ${tableName} with ${results.n} rows`))
+          .get("SELECT * FROM Classes", ()=>finish)
+      }/**/
     })
-    
-    // okay big girl time for the spells table
-    db.run("DROP TABLE IF EXISTS Spells")
-      .run(`CREATE TABLE Spells (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            spell_name TEXT,
-            spell_description TEXT,
-            school_id INTEGER REFERENCES Schools (id),
-            level INTEGER,
-            casttime_id INTEGER REFERENCES Times (id),
-            duration_id INTEGER REFERENCES Times (id),
-            range_id INTEGER REFERENCES Distances (id),
-            components INTEGER,
-            materials TEXT
-      )`) /**/
-    let statement = db.prepare("INSERT INTO Spells (spell_name, spell_description, school_id, level, casttime_id, duration_id, range_id, components, materials) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
-    Spells.forEach(spell=>{statement.run(Object.values(spell))})
-    statement.finalize() 
-    
-    // you did perfect! my perfect pet. theres just one more table the Classes_Spells relationship thingo
-    db.run("DROP TABLE IF EXISTS Classes_Spells")
-      .run("CREATE TABLE Classes_Spells (id INTEGER PRIMARY KEY AUTOINCREMENT, class_id INTEGER REFERENCES Classes (id), spell_id INTEGER REFERENCES Spells (id))")
-    statement = db.prepare("INSERT INTO Classes_Spells (class_id, spell_id) VALUES (?, ?)")
-    Classes_Spells.forEach((a,b)=>{statement.run(a,b)})
-    
-    // wonderful. marvelous. lets check its done
-    console.log("Initialisation complete")
-    for (x in tables) {
-      let tableName = x
-      db.get("SELECT COUNT(*) AS n FROM "+tableName, (e, results)=>console.log(e?e:`Table ${tableName} has ${results.n} rows`))
-    }/**/
-  })
-  
-}catch(e){console.log(e)}  
-});
+
+  }catch(e){console.log(e)}  
+  });
+})
+
+module.exports = procedural

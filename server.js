@@ -12,6 +12,8 @@ const exists = fs.existsSync(dbFile);
 const sqlite3 = require("sqlite3").verbose();
 const db = new sqlite3.Database(dbFile);
 
+
+db.all("SELECT * FROM Classes_Spells LEFT OUTER JOIN Spells ON Spells.id = spell_id LEFT OUTER JOIN Classes ON Classes.id = class_id WHERE spell_id=140", (e,r)=>console.log(e?e:JSON.stringify(r)))
 // listen for requests :)
 var listener = app.listen(process.env.PORT, () => {
   console.log(`Your app is listening on port ${listener.address().port}`);

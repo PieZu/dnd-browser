@@ -1,10 +1,10 @@
 {
   "name": "dnd-spells",
-  "version": "0.0.1",
-  "description": "A simple Node app with SQLite as a database management system, instantly up and running.",
+  "version": "0.1.1",
+  "description": "A small DND spell browser created for assesment purposes. Using Node & Express & SQLite.",
   "main": "server.js",
   "scripts": {
-    "start": "node parse_csv.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.17.1",
@@ -14,7 +14,7 @@
     "node": "12.x"
   },
   "repository": {
-    "url": "https://glitch.com/edit/#!/dnd-spells"
+    "url": "https://github.com/PieZu/dnd-browser"
   },
   "license": "MIT",
   "keywords": [

@@ -21,6 +21,7 @@ var listener = app.listen(process.env.PORT, () => {
   console.log(`Your app is listening on port ${listener.address().port}`);
 });
 
+app.use(express.static('public'))
 
 app.get("/sql/dupes", (request, response) => {
   let table = request.params.table 
@@ -39,7 +40,41 @@ app.get("/sql/:table", (request, response) => {
     response.send(htmlTableFrom(tableifiedObjArray(rows)))
   });
 })
-
+app.post("/spell", (request, response)=>{
+  let spellId = request.body.id
+  db.get(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, components, materials 
+            FROM Spells AS spell
+            LEFT OUTER JOIN Schools  AS school ON   school_id == school.id
+            LEFT OUTER JOIN Distances AS range ON    range_id == range.id 
+            LEFT OUTER JOIN Times AS casttime  ON casttime_id == casttime.id
+            LEFT OUTER JOIN Times AS duration  ON duration_id == duration.id
+            WHERE spell.id = ?
+`, spellId, (err, rows)=>{
+    if (err) console.log(err)
+    response.send(rows)
+  })
+})
+app.get("/spell/:id", (request, response) => {
+  let spellId = request.params.id
+  db.get(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, range.name AS range, components, materials 
+            FROM Spells AS spell
+            LEFT OUTER JOIN Schools  AS school ON   school_id == school.id
+            LEFT OUTER JOIN Distances AS range ON    range_id == range.id 
+            LEFT OUTER JOIN Times AS casttime  ON casttime_id == casttime.id
+            LEFT OUTER JOIN Times AS duration  ON duration_id == duration.id
+            WHERE spell.id = ?
+`, spellId, (err, rows)=>{
+    if (err) console.log(err)
+    response.send(rows)
+  })
+})
+/* 
+Spells.id, spell_name, spell_description, school.name, casttime.name, duration.name, components, materials
+              school_id INTEGER REFERENCES Schools (id),
+              level INTEGER,
+              casttime_id INTEGER REFERENCES Times (id),
+              duration_id INTEGER REFERENCES Times (id),
+              range_id INTEGER REFERENCES Distances (id),*/
 
 function tableifiedObjArray(array) {
   /* turns an array with structure like:

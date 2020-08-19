@@ -133,8 +133,8 @@ var procedural = new Promise(finish => {
       ["Schools", "Classes", "Distances", "Times"].forEach(table=>{
 
         db.run(`DROP TABLE IF EXISTS ${table}`) // we erase any previous data
-        db.run(`CREATE TABLE ${table} (id INTEGER PRIMARY KEY AUTOINCREMENT, ${table}_name TEXT)`) // create the table
-        let statement = db.prepare(`INSERT INTO ${table} (${table}_name) VALUES (?)`) //
+        db.run(`CREATE TABLE ${table} (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)`) // create the table
+        let statement = db.prepare(`INSERT INTO ${table} (name) VALUES (?)`) //
         tables[table].forEach(x=>{statement.run(x)})
         statement.finalize()
 

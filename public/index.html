@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>DND Spell Browser</title>
+  </head>
+  
+  <body>
+    <div id="search">
+      <label for="spellid">ID:</label>
+      <input type="text" id="spellid" name="id">
+      <button onclick="loadSpell()">Load</button>
+    </div>
+      
+    <div id="spell display">
+    </div>
+    
+    <script>
+      function loadSpell(id = document.getElementById("spellid").value) {
+        fetch("/spell/"+id, {})
+          .then(res => res.json())
+          .then(spell => {
+            document.getElementById("spell display").innerHTML = displaySpell(spell)
+          });
+        }
+      
+        function displaySpell(spell) {
+          console.log(spell)
+          var school 
+          switch (spell.level) {
+            case 0:
+              school = spell.school+" Cantrip"
+              break
+            case 1:
+              school = "1st level "+spell.school
+              break
+            case 2:
+              school = "2nd level "+spell.school
+              break
+            default:
+              school = spell.level+"th level "+spell.school
+          } 
+          
+          components = []
+          for (let i=0; i<3; i++) { if (spell.components >>
+                                        i & 1) components.push("VSM"[i]) }
+          
+          return `
+            <h1 class="Name"> ${spell.spell_name} </h1>
+            <em class="School"> ${school} </em>
+            <p>
+              <br>Components: <strong>${components.join(", ")}</strong>
+              ${components.includes("M")? "<br>Materials: <strong>"+spell.materials+"</strong>" :""}
+              <br>Casting time: <strong>${spell.casttime}</strong>
+              <br>Duration: <strong>${spell.duration}</strong>
+              <br>Range: <strong>${spell.range}</strong>
+
+              <br><br>
+              ${spell.spell_description}
+            </p>
+            `
+        }
+    </script>
+  </body>
+</html>

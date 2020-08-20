@@ -56,6 +56,22 @@ app.get("/spell/:id", (request, response) => {
     response.send(rows)
   })
 })
+
+app.get("/spells/:query", (request, response) => {
+  let filter = request.params.query
+  console.log(filter)
+  db.all(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, components, materials, range.name AS range,
+            (SELECT GROUP_CONCAT(Classes.name, ', ') FROM Classes_Spells JOIN Classes ON Classes.id == class_id WHERE spell.id = spell_id GROUP BY spell_id) AS classes
+            FROM Spells AS spell
+            LEFT OUTER JOIN Schools  AS school ON   school_id == school.id
+            LEFT OUTER JOIN Distances AS range ON    range_id == range.id 
+            LEFT OUTER JOIN Times AS casttime  ON casttime_id == casttime.id
+            LEFT OUTER JOIN Times AS duration  ON duration_id == duration.id
+            WHERE ${filter}`, (err, rows)=>{
+    if (err) console.log(err)
+    response.send(rows)
+  })
+})
 /* 
 Spells.id, spell_name, spell_description, school.name, casttime.name, duration.name, components, materials
               school_id INTEGER REFERENCES Schools (id),

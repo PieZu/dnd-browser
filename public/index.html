@@ -11,6 +11,10 @@
       <label for="spellid">ID:</label>
       <input type="text" id="spellid" name="id">
       <button onclick="loadSpell()">Load</button>
+      <br>
+      <label for="spellfilter">Filter Query:</label>
+      <input type="text" id="spellfilter" name="query">
+      <button onclick="findSpell()">Search</button>
     </div>
       
     <div id="spell display">
@@ -22,6 +26,15 @@
           .then(res => res.json())
           .then(spell => {
             document.getElementById("spell display").innerHTML = displaySpell(spell)
+          });
+        }
+      
+      function findSpell(id = document.getElementById("spellfilter").value) {
+        fetch("/spells/"+id, {})
+          .then(res => {console.log(res);return res.json()})
+          .then(spells => {
+            document.getElementById("spell display").innerHTML =""
+            spells.forEach(spell=>{document.getElementById("spell display").innerHTML += displaySpell(spell)})
           });
         }
       

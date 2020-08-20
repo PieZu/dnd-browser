@@ -43,12 +43,13 @@
           } 
           
           components = []
-          for (let i=0; i<3; i++) { if (spell.components >>
-                                        i & 1) components.push("VSM"[i]) }
+          for (let i=0; i<3; i++) { if (spell.components>>i & 1) components.push("VSM"[i]) }
           
           return `
             <h1 class="Name"> ${spell.spell_name} </h1>
             <em class="School"> ${school} </em>
+            <br>Usable by: <em>${spell.classes}</em>
+              
             <p>
               <br>Components: <strong>${components.join(", ")}</strong>
               ${components.includes("M")? "<br>Materials: <strong>"+spell.materials+"</strong>" :""}

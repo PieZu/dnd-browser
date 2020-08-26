@@ -87,7 +87,9 @@ function addSpell(spell) {
       "casttime_id": asLookup(Times, spell["Casting Time"]),
       "duration_id": asLookup(Times, spell.Duration),
       "range_id":    asLookup(Distances, spell.Range),
-      "components":  boolArrayToNumber([V, S, M]),
+      "verbal":      V,
+      "somatic":     S,
+      "material":    M,
       "materials":   normalisedMaterials
     })
     // dont forget the class associated with it
@@ -152,10 +154,12 @@ var procedural = new Promise(finish => {
               casttime_id INTEGER REFERENCES Times (id),
               duration_id INTEGER REFERENCES Times (id),
               range_id INTEGER REFERENCES Distances (id),
-              components INTEGER,
+              verbal INTEGER,
+              somatic INTEGER,
+              material INTEGER,
               materials TEXT
         )`) 
-      let statement = db.prepare("INSERT INTO Spells (spell_name, spell_description, school_id, level, casttime_id, duration_id, range_id, components, materials) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      let statement = db.prepare("INSERT INTO Spells (spell_name, spell_description, school_id, level, casttime_id, duration_id, range_id, verbal, somatic, material, materials) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
       Spells.forEach(spell=>{statement.run(Object.values(spell), (e,r)=>{if(e){console.log(e);console.log(spell)}})})
       statement.finalize() 
 

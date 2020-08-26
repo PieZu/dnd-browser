@@ -60,8 +60,8 @@
               school = spell.level+"th level "+spell.school
           } 
           
-          components = []
-          for (let i=0; i<3; i++) { if (spell.components>>i & 1) components.push("VSM"[i]) }
+          let components = []
+          for (let i=0; i <3; i++) { if ([spell.verbal, spell.somatic, spell.material][i]) components.push("VSM"[i]) } // yes theres probably a way to do this more elegantly but hey this was has the string 'i <3' which is cute
           
           return `
             <h1 class="Name"> ${spell.spell_name} </h1>

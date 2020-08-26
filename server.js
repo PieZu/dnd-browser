@@ -43,7 +43,7 @@ app.get("/sql/:table", (request, response) => {
 
 app.get("/spell/:id", (request, response) => {
   let spellId = request.params.id
-  db.get(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, components, materials, range.name AS range,
+  db.get(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, verbal, somatic, material, materials, range.name AS range,
             (SELECT GROUP_CONCAT(Classes.name, ', ') FROM Classes_Spells JOIN Classes ON Classes.id == class_id WHERE spell_id = ?) AS classes
             FROM Spells AS spell
             LEFT OUTER JOIN Schools  AS school ON   school_id == school.id
@@ -60,7 +60,7 @@ app.get("/spell/:id", (request, response) => {
 app.post("/spells/", (request, response) => {
   let filter = request.body.query
   console.log(request.body)
-  db.all(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, components, materials, range.name AS range,
+  db.all(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, verbal, somatic, material, materials, range.name AS range,
             (SELECT GROUP_CONCAT(Classes.name, ', ') FROM Classes_Spells JOIN Classes ON Classes.id == class_id WHERE spell.id = spell_id GROUP BY spell_id) AS classes
             FROM Spells AS spell
             LEFT OUTER JOIN Schools  AS school ON   school_id == school.id

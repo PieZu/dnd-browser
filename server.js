@@ -78,7 +78,8 @@ app.post("/spells/", (request, response) => {
             LEFT OUTER JOIN Distances AS range ON    range_id == range.id 
             LEFT OUTER JOIN Times AS casttime  ON casttime_id == casttime.id
             LEFT OUTER JOIN Times AS duration  ON duration_id == duration.id
-            ${filter}`, (err, rows)=>{
+            ${filter}
+            LIMIT 10`, (err, rows)=>{
     if (err) console.log(err)
     response.send(rows)
   })

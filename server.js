@@ -1,10 +1,8 @@
 // init project
 const express = require("express");
-const bodyParser = require("body-parser");
 const app = express();
 const fs = require("fs");
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(express.json());
 
 
 // init sqlite db
@@ -21,7 +19,9 @@ var listener = app.listen(process.env.PORT, () => {
   console.log(`Your app is listening on port ${listener.address().port}`);
 });
 
-app.use(express.static('public'))
+app.use(express.urlencoded())
+app.use(express.json());        // allows access to request.body (to extract post data)
+app.use(express.static('public'))  // make files in the ./public/*.* directory GETable 
 
 app.get("/sql/dupes", (request, response) => {
   let table = request.params.table 
@@ -57,9 +57,9 @@ app.get("/spell/:id", (request, response) => {
   })
 })
 
-app.get("/spells/:query", (request, response) => {
-  let filter = request.params.query
-  console.log(filter)
+app.post("/spells/", (request, response) => {
+  let filter = request.body.query
+  console.log(request.body)
   db.all(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, components, materials, range.name AS range,
             (SELECT GROUP_CONCAT(Classes.name, ', ') FROM Classes_Spells JOIN Classes ON Classes.id == class_id WHERE spell.id = spell_id GROUP BY spell_id) AS classes
             FROM Spells AS spell

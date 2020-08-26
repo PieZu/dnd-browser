@@ -29,10 +29,12 @@
           });
         }
       
-      function findSpell(id = document.getElementById("spellfilter").value) {
-        fetch("/spells/"+id, {})
+      function findSpell(filter = document.getElementById("spellfilter").value) {
+        let body = {query: filter}
+        fetch("/spells/", {method: "post", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}) 
           .then(res => {console.log(res);return res.json()})
           .then(spells => {
+            console.log(spells)
             document.getElementById("spell display").innerHTML =""
             spells.forEach(spell=>{document.getElementById("spell display").innerHTML += displaySpell(spell)})
           });

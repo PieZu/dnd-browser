@@ -58,8 +58,19 @@ app.get("/spell/:id", (request, response) => {
 })
 
 app.post("/spells/", (request, response) => {
-  let filter = request.body.query
-  console.log(request.body)
+  let filter = []
+  if (request.body.name) filter.push(`spell_name LIKE "${request.body.name}"`)
+  if (request.body.somatic  != undefined) filter.push(`spell.somatic = ${request.body.somatic}`)
+  if (request.body.verbal   != undefined) filter.push(`spell.somatic = ${request.body.verbal}`)
+  if (request.body.material != undefined) filter.push(`spell.somatic = ${request.body.material}`)
+  for (let [class_name, toggle] of Object.entries(request.body.classes)) {
+    if (toggle != undefined) filter.push(`classes ${toggle?"":"NOT"} LIKE "%${class_name}%"`)
+  }
+  
+  if (filter) filter = "WHERE "+filter.join(" AND ")
+  
+  
+  console.log(filter)
   db.all(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, verbal, somatic, material, materials, range.name AS range,
             (SELECT GROUP_CONCAT(Classes.name, ', ') FROM Classes_Spells JOIN Classes ON Classes.id == class_id WHERE spell.id = spell_id GROUP BY spell_id) AS classes
             FROM Spells AS spell
@@ -67,7 +78,7 @@ app.post("/spells/", (request, response) => {
             LEFT OUTER JOIN Distances AS range ON    range_id == range.id 
             LEFT OUTER JOIN Times AS casttime  ON casttime_id == casttime.id
             LEFT OUTER JOIN Times AS duration  ON duration_id == duration.id
-            WHERE ${filter}`, (err, rows)=>{
+            ${filter}`, (err, rows)=>{
     if (err) console.log(err)
     response.send(rows)
   })

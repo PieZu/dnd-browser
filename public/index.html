@@ -12,8 +12,8 @@
       <input type="text" id="spellid" name="id">
       <button onclick="loadSpell()">Load</button>
       <br>
-      <label for="spellfilter">Filter Query:</label>
-      <input type="text" id="spellfilter" name="query">
+      <label for="spellfilter">Name:</label>
+      <input type="text" id="spellname" name="name">
       <button onclick="findSpell()">Search</button>
     </div>
       
@@ -29,8 +29,8 @@
           });
         }
       
-      function findSpell(filter = document.getElementById("spellfilter").value) {
-        let body = {query: filter}
+      function findSpell(name = document.getElementById("spellname").value) {
+        let body = {name: name, classes: []}
         fetch("/spells/", {method: "post", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}) 
           .then(res => {console.log(res);return res.json()})
           .then(spells => {

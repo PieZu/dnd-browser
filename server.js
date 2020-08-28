@@ -59,7 +59,7 @@ app.get("/spell/:id", (request, response) => {
 
 app.post("/spells/", (request, response) => {
   let filter = []
-  if (request.body.name)                  filter.push(`spell_name LIKE "${request.body.name}"`)
+  if (request.body.name)                  filter.push(`spell_name LIKE "${request.body.name}%"`)
   if (request.body.somatic  != undefined) filter.push(`spell.somatic = ${request.body.somatic}`)
   if (request.body.verbal   != undefined) filter.push(`spell.verbal = ${request.body.verbal}`)
   if (request.body.material != undefined) filter.push(`spell.material = ${request.body.material}`)

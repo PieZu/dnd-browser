@@ -64,7 +64,7 @@ app.post("/spells/", (request, response) => {
   if (request.body.somatic  != undefined) { filter_text.push(`spell.somatic = (?)`);   user_input.push(request.body.somatic) }
   if (request.body.verbal   != undefined) { filter_text.push(`spell.verbal = (?)`);    user_input.push(request.body.verbal) }
   if (request.body.material != undefined) { filter_text.push(`spell.material = (?)`);  user_input.push(request.body.material) }
-  if (request.body.class)                 { filter_text.push(`classes LIKE (?)"`);     user_input.push("%"+request.body.class+"%") }
+  if (request.body.class)                 { filter_text.push(`classes LIKE (?)`);     user_input.push("%"+request.body.class+"%") }
   
   if (filter_text.length) filter_text = "WHERE "+filter_text.join(" AND ")
   

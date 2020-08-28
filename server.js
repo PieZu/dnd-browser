@@ -58,17 +58,18 @@ app.get("/spell/:id", (request, response) => {
 })
 
 app.post("/spells/", (request, response) => {
-  let filter = []
-  if (request.body.name)                  filter.push(`spell_name LIKE "${request.body.name}%"`)
-  if (request.body.somatic  != undefined) filter.push(`spell.somatic = ${request.body.somatic}`)
-  if (request.body.verbal   != undefined) filter.push(`spell.verbal = ${request.body.verbal}`)
-  if (request.body.material != undefined) filter.push(`spell.material = ${request.body.material}`)
-  if (request.body.class)                 filter.push(`classes LIKE "%${request.body.class}%"`)
+  let filter_text = [],
+      user_input  = [] // user input handled seperately to properly escape and prevent injections
+  if (request.body.name)                  { filter_text.push(`spell_name LIKE (?)`);   user_input.push(request.body.name+"%") }
+  if (request.body.somatic  != undefined) { filter_text.push(`spell.somatic = (?)`);   user_input.push(request.body.somatic) }
+  if (request.body.verbal   != undefined) { filter_text.push(`spell.verbal = (?)`);    user_input.push(request.body.verbal) }
+  if (request.body.material != undefined) { filter_text.push(`spell.material = (?)`);  user_input.push(request.body.material) }
+  if (request.body.class)                 { filter_text.push(`classes LIKE (?)"`);     user_input.push("%"+request.body.class+"%") }
   
-  if (filter.length) filter = "WHERE "+filter.join(" AND ")
+  if (filter_text.length) filter_text = "WHERE "+filter_text.join(" AND ")
   
   
-  console.log(filter)
+  console.log(filter_text, user_input)
   db.all(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, verbal, somatic, material, materials, range.name AS range,
             (SELECT GROUP_CONCAT(Classes.name, ', ') FROM Classes_Spells JOIN Classes ON Classes.id == class_id WHERE spell.id = spell_id GROUP BY spell_id) AS classes
             FROM Spells AS spell
@@ -76,8 +77,8 @@ app.post("/spells/", (request, response) => {
             LEFT OUTER JOIN Distances AS range ON    range_id == range.id 
             LEFT OUTER JOIN Times AS casttime  ON casttime_id == casttime.id
             LEFT OUTER JOIN Times AS duration  ON duration_id == duration.id
-            ${filter}
-            LIMIT 10`, (err, rows)=>{
+            ${filter_text}
+            LIMIT 10`, ...user_input, (err, rows)=>{
     if (err) console.log(err)
     response.send(rows)
   })

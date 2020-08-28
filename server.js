@@ -58,15 +58,17 @@ app.get("/spell/:id", (request, response) => {
 })
 
 app.post("/spells/", (request, response) => {
-  let filter_text = [],
+  let filters = [],
       user_input  = [] // user input handled seperately to properly escape and prevent injections
-  if (request.body.name)                  { filter_text.push(`spell_name LIKE (?)`);   user_input.push(request.body.name+"%") }
-  if (request.body.somatic  != undefined) { filter_text.push(`spell.somatic = (?)`);   user_input.push(request.body.somatic) }
-  if (request.body.verbal   != undefined) { filter_text.push(`spell.verbal = (?)`);    user_input.push(request.body.verbal) }
-  if (request.body.material != undefined) { filter_text.push(`spell.material = (?)`);  user_input.push(request.body.material) }
-  if (request.body.class)                 { filter_text.push(`classes LIKE (?)`);     user_input.push("%"+request.body.class+"%") }
+  if (request.body.name)                  { filters.push(`spell_name LIKE (?)`);   user_input.push(request.body.name+"%") }
+  if (request.body.somatic  != undefined) { filters.push(`spell.somatic = (?)`);   user_input.push(request.body.somatic) }
+  if (request.body.verbal   != undefined) { filters.push(`spell.verbal = (?)`);    user_input.push(request.body.verbal) }
+  if (request.body.material != undefined) { filters.push(`spell.material = (?)`);  user_input.push(request.body.material) }
+  if (request.body.class)                 { filters.push(`classes LIKE (?)`);      user_input.push("%"+request.body.class+"%") }
+  if (request.body.school)                { filters.push(`school = (?)`);          user_input.push(request.body.school) }
+  if (request.body.minimumlevel)          { filters.push(`level >= (?)`);           user_input.push(request.body.minimumlevel) }
   
-  if (filter_text.length) filter_text = "WHERE "+filter_text.join(" AND ")
+  var filter_text = "WHERE "+filters.join(" AND ")
   
   
   console.log(filter_text, user_input)
@@ -86,8 +88,14 @@ app.post("/spells/", (request, response) => {
 
 app.get("/classList", (request, response) => {
   db.all("SELECT id, name FROM Classes", (err, rows)=>{
-  if (err) console.log(err)
-  response.send(rows)
+    if (err) console.log(err)
+    response.send(rows)
+  })
+})
+app.get("/schoolList", (request, response) => {
+  db.all("SELECT id, name FROM Schools", (err, rows)=>{
+    if (err) console.log(err)
+    response.send(rows)
   })
 })
 /* 

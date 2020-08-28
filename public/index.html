@@ -43,6 +43,10 @@
       .Class:hover {
         background-color: #ccc;
       }
+      
+      input[type=number] {
+        width: 25px;
+      }
     </style>
   </head>
   
@@ -56,6 +60,8 @@
       <label for="somatic">  S      </label> <span class="checkbox" id="somatic"></span>
       <label for="material"> M      </label> <span class="checkbox" id="material"></span>
       <label for="class">    Class: </label> <select id="class"><option value="">&lt;any&gt;</option></select>
+      <label for="school">   School</label>  <select id="school"><option value="">&lt;any&gt;</option></select>
+      <label for="minlvl">Minimum Level<label> <input id="minlvl" type="number" value="0" min="0" max="9">
       <button onclick="findSpell()">Search</button>
     </div>
       
@@ -73,7 +79,9 @@
       
       function findSpell() {
         let body = {name: document.getElementById("spellname").value, 
-                    class: document.getElementById("class").value}
+                    class: document.getElementById("class").value,
+                    school: document.getElementById("school").value,
+                    minimumlevel: document.getElementById("minlvl").value}
         
         let comps = ["verbal", "somatic", "material"]
         comps.forEach(component=>{
@@ -149,11 +157,15 @@
       })
       
       // populate class filter list
-      fetch("/classList").then(res=>res.json()).then(classes=>{
-        classes.forEach(({name})=>{
-          document.getElementById("class").innerHTML += "<option>"+name+"</option>"
+      function populateOptions(property) {
+        fetch(property+"List").then(res=>res.json()).then(options=>{
+          options.forEach(({name})=>{
+            document.getElementById(property).innerHTML += "<option>"+name+"</option>"
+          })
         })
-      })
+      }
+      populateOptions("class")
+      populateOptions("school")
     </script>
   </body>
 </html>

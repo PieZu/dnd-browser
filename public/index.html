@@ -36,15 +36,14 @@
   
   <body>
     <div id="search">
-      <label for="spellid">ID:</label>
-      <input type="text" id="spellid" name="id">
+      <label for="spellid">  ID:    </label> <input type="text" id="spellid">
       <button onclick="loadSpell()">Load</button>
       <br>
-      <label for="spellname">Name:</label>
-      <input type="text" id="spellname" name="name">
-      V <span class="checkbox" id="verbal"></span>
-      S <span class="checkbox" id="somatic"></span>
-      M <span class="checkbox" id="material"></span>
+      <label for="spellname">Name:  </label> <input type="text" id="spellname">
+      <label for="verbal">   V      </label> <span class="checkbox" id="verbal"></span>
+      <label for="somatic">  S      </label> <span class="checkbox" id="somatic"></span>
+      <label for="material"> M      </label> <span class="checkbox" id="material"></span>
+      <label for="class">    Class: </label> <select id="class"><option value="">&lt;any&gt;</option></select>
       <button onclick="findSpell()">Search</button>
     </div>
       
@@ -60,14 +59,17 @@
           });
         }
       
-      function findSpell(name = document.getElementById("spellname").value) {
-        let body = {name: name, classes: []}
+      function findSpell() {
+        let body = {name: document.getElementById("spellname").value, 
+                    class: document.getElementById("class").value}
+        
         let comps = ["verbal", "somatic", "material"]
         comps.forEach(component=>{
           values = document.getElementById(component).classList
           if (values.contains("include")) body[component] = 1
           if (values.contains("exclude")) body[component] = 0
         })
+        
         fetch("/spells/", {method: "post", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}) 
           .then(res => {console.log(res);return res.json()})
           .then(spells => {
@@ -132,6 +134,13 @@
             box.classList.add("include")
           }
         }
+      })
+      
+      // populate class filter list
+      fetch("/classList").then(res=>res.json()).then(classes=>{
+        classes.forEach(({name})=>{
+          document.getElementById("class").innerHTML += "<option>"+name+"</option>"
+        })
       })
     </script>
   </body>

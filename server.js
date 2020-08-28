@@ -59,13 +59,11 @@ app.get("/spell/:id", (request, response) => {
 
 app.post("/spells/", (request, response) => {
   let filter = []
-  if (request.body.name) filter.push(`spell_name LIKE "${request.body.name}"`)
+  if (request.body.name)                  filter.push(`spell_name LIKE "${request.body.name}"`)
   if (request.body.somatic  != undefined) filter.push(`spell.somatic = ${request.body.somatic}`)
   if (request.body.verbal   != undefined) filter.push(`spell.verbal = ${request.body.verbal}`)
   if (request.body.material != undefined) filter.push(`spell.material = ${request.body.material}`)
-  for (let [class_name, toggle] of Object.entries(request.body.classes)) {
-    if (toggle != undefined) filter.push(`classes ${toggle?"":"NOT"} LIKE "%${class_name}%"`)
-  }
+  if (request.body.class)                 filter.push(`classes LIKE "%${request.body.class}%"`)
   
   if (filter.length) filter = "WHERE "+filter.join(" AND ")
   
@@ -82,6 +80,13 @@ app.post("/spells/", (request, response) => {
             LIMIT 10`, (err, rows)=>{
     if (err) console.log(err)
     response.send(rows)
+  })
+})
+
+app.get("/classList", (request, response) => {
+  db.all("SELECT id, name FROM Classes", (err, rows)=>{
+  if (err) console.log(err)
+  response.send(rows)
   })
 })
 /* 

@@ -66,7 +66,7 @@ app.post("/spells/", (request, response) => {
   if (request.body.material != undefined) { filters.push(`spell.material = (?)`);  user_input.push(request.body.material) }
   if (request.body.class)                 { filters.push(`classes LIKE (?)`);      user_input.push("%"+request.body.class+"%") }
   if (request.body.school)                { filters.push(`school = (?)`);          user_input.push(request.body.school) }
-  if (request.body.minimumlevel)          { filters.push(`level >= (?)`);           user_input.push(request.body.minimumlevel) }
+  if (request.body.maximumlevel)          { filters.push(`level <= (?)`);          user_input.push(request.body.maximumlevel) }
   
   var filter_text = "WHERE "+filters.join(" AND ")
   

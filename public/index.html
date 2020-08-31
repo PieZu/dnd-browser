@@ -61,7 +61,7 @@
       <label for="material"> M      </label> <span class="checkbox" id="material"></span>
       <label for="class">    Class: </label> <select id="class"><option value="">&lt;any&gt;</option></select>
       <label for="school">   School</label>  <select id="school"><option value="">&lt;any&gt;</option></select>
-      <label for="minlvl">Minimum Level<label> <input id="minlvl" type="number" value="0" min="0" max="9">
+      <label for="maxlvl">Maximum Level<label> <input id="maxlvl" type="number" value="9" min="0" max="9">
       <button onclick="findSpell()">Search</button>
     </div>
       
@@ -78,10 +78,10 @@
         }
       
       function findSpell() {
-        let body = {name: document.getElementById("spellname").value, 
-                    class: document.getElementById("class").value,
-                    school: document.getElementById("school").value,
-                    minimumlevel: document.getElementById("minlvl").value}
+        let body = {name:         document.getElementById("spellname").value, 
+                    class:        document.getElementById("class").value,
+                    school:       document.getElementById("school").value,
+                    maximumlevel: document.getElementById("maxlvl").value}
         
         let comps = ["verbal", "somatic", "material"]
         comps.forEach(component=>{
@@ -124,8 +124,10 @@
           
           return `
             <h1 class="Name"> ${spell.spell_name} </h1>
-            <em class="School"> ${school} </em>
-            <br>Usable by: <span class="ClassList">${spell.classes.split(", ").map(x=>`<span class="Class" onclick="document.getElementById('class').value='${x}'; findSpell()">${x}</span>`).join(", ")}</span>
+            <em class="School"> <span onclick="set('school', '${spell.school}')">${school} </span>
+            <br>Usable by: <span class="ClassList">
+                ${spell.classes.split(", ").map(x=>`<span class="Class" onclick="set('class', '${x}')"; findSpell()">${x}</span>`).join(", ")}
+            </span>
               
             <p>
               <br>Components: <strong>${components.join(", ")}</strong>
@@ -140,6 +142,10 @@
             `
         }
       
+      function set(property, value) { // helper function to make onclicks easier
+        document.getElementById(property).value = value
+        findSpell()
+      }
       // make the tristate checkbox filter work
       [...document.getElementsByClassName("checkbox")].forEach(box=>{
         box.onclick = (e)=>{

@@ -32,15 +32,13 @@
         border-color: #c74545;
       }
       
-      .ClassList {
+      span {
         font-style: italic;
-      }
-      .Class {
         background-color: #eee;
         border: 1px;
         border-radius: 5px;
       }
-      .Class:hover {
+      span:hover {
         background-color: #ccc;
       }
       
@@ -55,13 +53,13 @@
       <label for="spellid">  ID:    </label> <input type="text" id="spellid">
       <button onclick="loadSpell()">Load</button>
       <br>
-      <label for="spellname">Name:  </label> <input type="text" id="spellname">
-      <label for="verbal">   V      </label> <span class="checkbox" id="verbal"></span>
+      <label for="name">     Name:  </label> <input type="text" id="name" oninput="findSpell()">
+      <label for="verbal">   V      </label> <span class="checkbox" id="verbal" ></span>
       <label for="somatic">  S      </label> <span class="checkbox" id="somatic"></span>
       <label for="material"> M      </label> <span class="checkbox" id="material"></span>
-      <label for="class">    Class: </label> <select id="class"><option value="">&lt;any&gt;</option></select>
-      <label for="school">   School</label>  <select id="school"><option value="">&lt;any&gt;</option></select>
-      <label for="maxlvl">Maximum Level<label> <input id="maxlvl" type="number" value="9" min="0" max="9">
+      <label for="class">    Class: </label> <select id="class" onchange="findSpell()"><option value="">&lt;any&gt;</option></select>
+      <label for="school">   School</label>  <select id="school" onchange="findSpell()"><option value="">&lt;any&gt;</option></select>
+      <label for="maxlvl">Maximum Level<label> <input id="maxlvl" type="number" value="9" min="0" max="9" onchange="findSpell()">
       <button onclick="findSpell()">Search</button>
     </div>
       
@@ -78,7 +76,7 @@
         }
       
       function findSpell() {
-        let body = {name:         document.getElementById("spellname").value, 
+        let body = {name:         document.getElementById("name").value, 
                     class:        document.getElementById("class").value,
                     school:       document.getElementById("school").value,
                     maximumlevel: document.getElementById("maxlvl").value}
@@ -101,33 +99,33 @@
       
         function displaySpell(spell) {
           console.log(spell)
-          var school 
+          var school = `<span onclick = "set('school', '${spell.school}')">${spell.school}</span>`
           switch (spell.level) {
             case 0:
-              school = spell.school+" Cantrip"
+              school += ` <span onclick="set('maxlvl', 0)">Cantrip</span>`
               break
             case 1:
-              school = "1st level "+spell.school
+              school = `<span onclick="set('maxlvl', 1)">1st level</span> `+school
               break
             case 2:
-              school = "2nd level "+spell.school
+              school = `<span onclick="set('maxlvl', 2)">2nd level</span> `+school
               break
             case 3:
-              school = "3rd level "+spell.school
+              school = `<span onclick="set('maxlvl', 3)">3rd level</span> `+school
               break
             default:
-              school = spell.level+"th level "+spell.school
+              school = `<span onclick="set('maxlvl', ${spell.level})">${spell.level}th level</span> `+school
           } 
           
           let components = []
           for (let i=0; i <3; i++) { if ([spell.verbal, spell.somatic, spell.material][i]) components.push("VSM"[i]) } // yes theres probably a way to do this more elegantly but hey this was has the string 'i <3' which is cute
           
           return `
-            <h1 class="Name"> ${spell.spell_name} </h1>
-            <em class="School"> <span onclick="set('school', '${spell.school}')">${school} </span>
-            <br>Usable by: <span class="ClassList">
+            <h1 class="Name" onclick="set('name', '${spell.spell_name}')"> ${spell.spell_name} </h1>
+            <em class="School"> ${school} </span>
+            <br>Usable by: 
                 ${spell.classes.split(", ").map(x=>`<span class="Class" onclick="set('class', '${x}')"; findSpell()">${x}</span>`).join(", ")}
-            </span>
+            
               
             <p>
               <br>Components: <strong>${components.join(", ")}</strong>
@@ -159,6 +157,7 @@
           else {
             box.classList.add("include")
           }
+          findSpell() // autorefresh
         }
       })
       

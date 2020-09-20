@@ -70,7 +70,6 @@ app.post("/spells/", (request, response) => {
   
   var filter_text = "WHERE "+filters.join(" AND ")
   
-  
   console.log(filter_text, user_input)
   db.all(`SELECT spell.id, spell_name, spell_description, school.name AS school, level, casttime.name AS casttime, duration.name AS duration, verbal, somatic, material, materials, range.name AS range,
             (SELECT GROUP_CONCAT(Classes.name, ', ') FROM Classes_Spells JOIN Classes ON Classes.id == class_id WHERE spell.id = spell_id GROUP BY spell_id) AS classes

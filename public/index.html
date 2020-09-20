@@ -50,9 +50,6 @@
   
   <body>
     <div id="search">
-      <label for="spellid">  ID:    </label> <input type="text" id="spellid">
-      <button onclick="loadSpell()">Load</button>
-      <br>
       <label for="name">     Name:  </label> <input type="text" id="name" oninput="findSpell()">
       <label for="verbal">   V      </label> <span class="checkbox" id="verbal" ></span>
       <label for="somatic">  S      </label> <span class="checkbox" id="somatic"></span>
@@ -67,14 +64,6 @@
     </div>
     
     <script>
-      function loadSpell(id = document.getElementById("spellid").value) {
-        fetch("/spell/"+id, {})
-          .then(res => res.json())
-          .then(spell => {
-            document.getElementById("spell display").innerHTML = displaySpell(spell)
-          });
-        }
-      
       function findSpell() {
         let body = {name:         document.getElementById("name").value, 
                     class:        document.getElementById("class").value,

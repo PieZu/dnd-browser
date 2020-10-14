@@ -50,89 +50,113 @@
   
   <body>
     <div id="search">
-      <label for="name">     Name:  </label> <input type="text" id="name" oninput="findSpell()">
+      <label for="name">     Name:  </label> <input type="text" id="name" oninput="search()">
       <label for="verbal">   V      </label> <span class="checkbox" id="verbal" ></span>
       <label for="somatic">  S      </label> <span class="checkbox" id="somatic"></span>
       <label for="material"> M      </label> <span class="checkbox" id="material"></span>
-      <label for="class">    Class: </label> <select id="class" onchange="findSpell()"><option value="">&lt;any&gt;</option></select>
-      <label for="school">   School</label>  <select id="school" onchange="findSpell()"><option value="">&lt;any&gt;</option></select>
-      <label for="maxlvl">Maximum Level<label> <input id="maxlvl" type="number" value="9" min="0" max="9" onchange="findSpell()">
-      <button onclick="findSpell()">Search</button>
+      <label for="class">    Class: </label> <select id="class" onchange="search()"><option value="">&lt;any&gt;</option></select>
+      <label for="school">   School</label>  <select id="school" onchange="search()"><option value="">&lt;any&gt;</option></select>
+      <label for="maxlvl">Maximum Level</label> <input id="maxlvl" type="number" value="9" min="0" max="9" onchange="search()">
+      <button onclick="search()">Search</button>
     </div>
       
     <div id="spell display">
+      <!-- dynamically populated with javascript -->
     </div>
     
+    
     <script>
-      function findSpell() {
+      /* -- Functions --  */
+      
+      // function that interprets search filter, sends a request to server, then populates html with results
+      function search() {
+        // extract search settings
         let body = {name:         document.getElementById("name").value, 
                     class:        document.getElementById("class").value,
                     school:       document.getElementById("school").value,
-                    maximumlevel: document.getElementById("maxlvl").value}
+                    maximumlevel: document.getElementById("maxlvl").value};
         
-        let comps = ["verbal", "somatic", "material"]
-        comps.forEach(component=>{
-          values = document.getElementById(component).classList
+        ["verbal", "somatic", "material"].forEach(component=>{
+          values = document.getElementById(component).classList // the classes on the html button associated with each component. 3-way switch that contains either 'include', 'exclude', or neither
           if (values.contains("include")) body[component] = 1
           if (values.contains("exclude")) body[component] = 0
         })
         
+        // send search request to server
         fetch("/spells/", {method: "post", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)}) 
-          .then(res => {console.log(res);return res.json()})
+          .then(res => res.json())
           .then(spells => {
-            console.log(spells)
-            document.getElementById("spell display").innerHTML =""
-            spells.forEach(spell=>{document.getElementById("spell display").innerHTML += displaySpell(spell)})
+            display.innerHTML ="" // clear display 
+            spells.forEach(spell=> display.innerHTML += displaySpell(spell) ) // add each returned spell to display, formatted
           });
-        }
-      
-        function displaySpell(spell) {
-          console.log(spell)
-          var school = `<span onclick = "set('school', '${spell.school}')">${spell.school}</span>`
-          switch (spell.level) {
-            case 0:
-              school += ` <span onclick="set('maxlvl', 0)">Cantrip</span>`
-              break
-            case 1:
-              school = `<span onclick="set('maxlvl', 1)">1st level</span> `+school
-              break
-            case 2:
-              school = `<span onclick="set('maxlvl', 2)">2nd level</span> `+school
-              break
-            case 3:
-              school = `<span onclick="set('maxlvl', 3)">3rd level</span> `+school
-              break
-            default:
-              school = `<span onclick="set('maxlvl', ${spell.level})">${spell.level}th level</span> `+school
-          } 
-          
-          let components = []
-          for (let i=0; i <3; i++) { if ([spell.verbal, spell.somatic, spell.material][i]) components.push("VSM"[i]) } // yes theres probably a way to do this more elegantly but hey this was has the string 'i <3' which is cute
-          
-          return `
-            <h1 class="Name" onclick="set('name', '${spell.spell_name}')"> ${spell.spell_name} </h1>
-            <em class="School"> ${school} </span>
-            <br>Usable by: 
-                ${spell.classes.split(", ").map(x=>`<span class="Class" onclick="set('class', '${x}')"; findSpell()">${x}</span>`).join(", ")}
-            
-              
-            <p>
-              <br>Components: <strong>${components.join(", ")}</strong>
-              ${components.includes("M")? "<br>Materials: <strong>"+spell.materials+"</strong>" :""}
-              <br>Casting time: <strong>${spell.casttime}</strong>
-              <br>Duration: <strong>${spell.duration}</strong>
-              <br>Range: <strong>${spell.range}</strong>
+      }
+      // function that converts returned json from server to human-readable html
+      function displaySpell(spell) {
+        // calculate html displaying school
+        var school = `<span onclick = "set('school', '${spell.school}')">${spell.school}</span>`
+        // calculate html displaying level & prepend/append it to the school name
+        switch (spell.level) {
+          case 0: // Level 0 Spells are known as <School> Cantrips
+            school += ` <span onclick="set('maxlvl', 0)">Cantrip</span>`
+            break
+          case 1: // 1st
+            school = `<span onclick="set('maxlvl', 1)">1st level</span> `+school
+            break
+          case 2: // 2nd
+            school = `<span onclick="set('maxlvl', 2)">2nd level</span> `+school
+            break
+          case 3: // 3rd
+            school = `<span onclick="set('maxlvl', 3)">3rd level</span> `+school
+            break
+          default: // nth
+            school = `<span onclick="set('maxlvl', ${spell.level})">${spell.level}th level</span> `+school
+        } 
 
-              <br><br>
-              ${spell.spell_description}
-            </p>
-            `
-        }
+        // turn component booleans into an array of initials 
+        let components = []
+        for (let i=0; i <3; i++) { if ([spell.verbal, spell.somatic, spell.material][i]) components.push("VSM"[i]) }
+
+        // return all the received & calculated data in nice html formatting
+        return `
+          <h1 class="Name" onclick="set('name', '${spell.spell_name}')"> ${spell.spell_name} </h1>
+          <em class="School"> ${school} </span>
+          <br>Usable by: 
+              ${spell.classes.split(", ").map(x=>`<span class="Class" onclick="set('class', '${x}')"; search()">${x}</span>`).join(", ")}
+
+
+          <p>
+            <br>Components: <strong>${components.join(", ")}</strong>
+            ${components.includes("M")? "<br>Materials: <strong>"+spell.materials+"</strong>" :""}
+            <br>Casting time: <strong>${spell.casttime}</strong>
+            <br>Duration: <strong>${spell.duration}</strong>
+            <br>Range: <strong>${spell.range}</strong>
+
+            <br><br>
+            ${spell.spell_description}
+          </p>
+          `
+      }
       
+      // helper function that lets html elements have concise onclicks that change value's and update the filter / research
       function set(property, value) { // helper function to make onclicks easier
         document.getElementById(property).value = value
-        findSpell()
+        search()
       }
+      
+      // populate the dropdown filters with valid options
+      function populateOptions(property) {
+        // ./schoolList/ & ./classList/ implement GET requests that return JSON array of the Schools & Class sql lookup/idmapping tables respectively
+        fetch(property+"List").then(res=>res.json()).then(options=>{
+          options.forEach(({name})=>{
+            // for each option, add that option's name to the dropdown filter for property (school or class)
+            document.getElementById(property).innerHTML += "<option>"+name+"</option>"
+          })
+        })
+      }
+      
+      /* -- Procedural Code -- */
+      display = document.getElementById("spell display");
+      
       // make the tristate checkbox filter work
       [...document.getElementsByClassName("checkbox")].forEach(box=>{
         box.onclick = (e)=>{
@@ -146,20 +170,15 @@
           else {
             box.classList.add("include")
           }
-          findSpell() // autorefresh
+          search() // autorefresh
         }
       })
       
-      // populate class filter list
-      function populateOptions(property) {
-        fetch(property+"List").then(res=>res.json()).then(options=>{
-          options.forEach(({name})=>{
-            document.getElementById(property).innerHTML += "<option>"+name+"</option>"
-          })
-        })
-      }
+      
       populateOptions("class")
       populateOptions("school")
+      
+      search() // load at start  
     </script>
   </body>
 </html>
